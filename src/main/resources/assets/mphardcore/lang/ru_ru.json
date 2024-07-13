@@ -1,0 +1,16 @@
+{
+  "mphardcore.lives_left": "Осталось жизней: %s",
+  "mphardcore.no_lives_left": "У вас не осталось жизней",
+  "mphardcore.was_last_live": "Это была ваша последняя жизнь. Теперь вы наблюдатель",
+  "mphardcore.set_player_lives_to": "Игроку %s установлено количество жизней на %d",
+  "mphardcore.player_lives_are": "Количество жизней игрока %s: %d",
+  "mphardcore.player_doesnt_need_rescue": "Игрок %s не нуждается в перерождении",
+  "mphardcore.player_was_rescued_already": "Игрок %s достиг лимита перерождений (%d)",
+  "mphardcore.player_rescue_limit_was_reset": "Лимит перерождений игрока %s был сброшен",
+  "mphardcore.rescued_player": "Игрок %s был перерожден",
+  "mphardcore.has_only_one_life_left": "У игрока %s осталась всего одна жизнь!",
+  "mphardcore.n_lives": "%d жизней",
+  "mphardcore.midnightconfig.title": "Настройки Multiplayer Hardcore",
+  "mphardcore.midnightconfig.defaultLives": "Количество жизней по-умолчанию",
+  "mphardcore.midnightconfig.maxRescueTimes": "Количество раз игрок может быть перерождён администратором (/hardcore rescue)"
+}

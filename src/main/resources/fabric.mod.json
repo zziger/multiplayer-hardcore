@@ -1,0 +1,39 @@
+{
+	"schemaVersion": 1,
+	"id": "mphardcore",
+	"version": "${version}",
+	"name": "Multiplayer Hardcore",
+	"description": "This mod improves multiplayer hardcore experience by managing custom amount of lives per-player",
+	"authors": [
+		"zziger (Artem Dzhemesiuk)"
+	],
+	"contact": {
+		"sources": "https://github.com/zziger/multiplayer-hardcore",
+		"issues": "https://github.com/zziger/multiplayer-hardcore/issues"
+	},
+	"license": "MIT",
+	"icon": "assets/mphardcore/icon.png",
+	"environment": "*",
+	"accessWidener": "mphardcore.accesswidener",
+	"entrypoints": {
+		"main": [
+			"me.zziger.mphardcore.MultiplayerHardcore"
+		],
+		"client": [
+			"me.zziger.mphardcore.MultiplayerHardcoreClient"
+		]
+	},
+	"mixins": [
+		"mphardcore.mixins.json",
+		{
+			"config": "mphardcore.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.15.11",
+		"minecraft": "~1.21",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}

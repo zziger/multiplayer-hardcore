@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "me.zziger.mphardcore.mixin.client",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "DeathScreenMixin",
+    "PlayerListHudMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

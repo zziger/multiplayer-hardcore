@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "package": "me.zziger.mphardcore.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "LevelInfoMixin",
+    "MinecraftServerMixin",
+    "ServerPlayerEntityMixin",
+    "ServerPlayNetworkHandlerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+	}
+}

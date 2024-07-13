@@ -1,0 +1,17 @@
+{
+  "mphardcore.lives_left": "Lives left: %s",
+  "mphardcore.no_lives_left": "You have no lives left",
+  "mphardcore.was_last_live": "It was your last life. You are now a spectator",
+  "mphardcore.set_player_lives_to": "Set player %s lives to %d",
+  "mphardcore.player_lives_are": "Player %s lives are %d",
+  "mphardcore.player_doesnt_need_rescue": "Player %s does not need rescue",
+  "mphardcore.player_was_rescued_already": "Player %s has reached rescue limit (%d)",
+  "mphardcore.player_rescue_limit_was_reset": "Player %s rescue limit was reset",
+  "mphardcore.rescued_player": "Rescued player %s",
+  "mphardcore.you_have_n_lives_left": "You have %d lives left",
+  "mphardcore.has_only_one_life_left": "Player %s has only one life left!",
+  "mphardcore.n_lives": "%d lives",
+  "mphardcore.midnightconfig.title": "Multiplayer Hardcore Config",
+  "mphardcore.midnightconfig.defaultLives": "Default lives amount",
+  "mphardcore.midnightconfig.maxRescueTimes": "Max times player can be rescued by an admin (/hardcore rescue)"
+}
