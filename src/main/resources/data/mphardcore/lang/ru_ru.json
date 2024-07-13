@@ -7,5 +7,7 @@
   "mphardcore.player_was_rescued_already": "Игрок %s достиг лимита перерождений (%d)",
   "mphardcore.player_rescue_limit_was_reset": "Лимит перерождений игрока %s был сброшен",
   "mphardcore.rescued_player": "Игрок %s был перерожден",
-  "mphardcore.has_only_one_life_left": "У игрока %s осталась всего одна жизнь!"
+  "mphardcore.has_only_one_life_left": "У игрока %s осталась всего одна жизнь!",
+  "mphardcore.install_mod": "Этот сервер использует мод Multiplayer Hardcore.\nУстановите его для удобного отображения количества жизней",
+  "mphardcore.mod_outdated": "Ваш мод Multiplayer Hardcore устарел"
 }

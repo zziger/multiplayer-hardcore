@@ -2,19 +2,21 @@ package me.zziger.mphardcore.network;
 
 import com.mojang.authlib.GameProfile;
 import me.zziger.mphardcore.MultiplayerHardcore;
+import me.zziger.mphardcore.PlayerCompatibilityManager;
 import me.zziger.mphardcore.PlayerLivesState;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.network.packet.s2c.play.ScoreboardScoreUpdateS2CPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Uuids;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 public record PlayerStateUpdatePayload(UUID playerUUID, int livesLeft) implements CustomPayload {
@@ -33,30 +35,38 @@ public record PlayerStateUpdatePayload(UUID playerUUID, int livesLeft) implement
         return ID;
     }
 
-    public static void AnnounceStateOf(PlayerEntity player, PlayerLivesState.PlayerData state) {
-        PlayerStateUpdatePayload payload = new PlayerStateUpdatePayload(player.getUuid(), state.livesLeft);
+    public static void SendPayload(ServerPlayerEntity targetPlayer, GameProfile statePlayer, PlayerStateUpdatePayload payload) {
+        if (PlayerCompatibilityManager.getPlayerData(targetPlayer).compatible) {
+            ServerPlayNetworking.send(targetPlayer, payload);
+        } else {
+            targetPlayer.networkHandler.sendPacket(new ScoreboardScoreUpdateS2CPacket(statePlayer.getName(), MultiplayerHardcore.fakeScoreboard.getName(), payload.livesLeft * 2, Optional.empty(), Optional.empty()));
+        }
+    }
 
-        Objects.requireNonNull(player.getServer()).getPlayerManager().getPlayerList().forEach(serverPlayer -> {
-            ServerPlayNetworking.send(serverPlayer, payload);
+    public static void SendPayload(ServerPlayerEntity targetPlayer, GameProfile statePlayer, PlayerLivesState.PlayerData state) {
+        SendPayload(targetPlayer, statePlayer, new PlayerStateUpdatePayload(statePlayer.getId(), state.livesLeft));
+    }
+
+    public static void AnnounceStateOf(MinecraftServer server, GameProfile statePlayer, PlayerLivesState.PlayerData state) {
+        PlayerStateUpdatePayload payload = new PlayerStateUpdatePayload(statePlayer.getId(), state.livesLeft);
+
+        Objects.requireNonNull(server).getPlayerManager().getPlayerList().forEach(targetPlayer -> {
+            SendPayload(targetPlayer, statePlayer, payload);
         });
     }
 
-    public static void AnnounceStateOf(MinecraftServer server, GameProfile player, PlayerLivesState.PlayerData state) {
-        PlayerStateUpdatePayload payload = new PlayerStateUpdatePayload(player.getId(), state.livesLeft);
-
-        Objects.requireNonNull(server).getPlayerManager().getPlayerList().forEach(serverPlayer -> {
-            ServerPlayNetworking.send(serverPlayer, payload);
-        });
+    public static void AnnounceStateOf(MinecraftServer server, GameProfile statePlayer) {
+        AnnounceStateOf(server, statePlayer, PlayerLivesState.getPlayerState(server, statePlayer));
     }
 
-    public static void AnnounceAllStatesTo(ServerPlayerEntity player) {
-        PlayerLivesState.PlayerData personalState = PlayerLivesState.getPlayerState(player);
-        ServerPlayNetworking.send(player, new PlayerStateUpdatePayload(player.getUuid(), personalState.livesLeft));
+    public static void AnnounceAllStatesTo(ServerPlayerEntity targetPlayer) {
+        PlayerLivesState.PlayerData personalState = PlayerLivesState.getPlayerState(targetPlayer);
+        SendPayload(targetPlayer, targetPlayer.getGameProfile(), personalState);
 
-        Objects.requireNonNull(player.getServer()).getPlayerManager().getPlayerList().forEach(serverPlayer -> {
-            if (serverPlayer == player) return;
-            PlayerLivesState.PlayerData state = PlayerLivesState.getPlayerState(serverPlayer);
-            ServerPlayNetworking.send(player, new PlayerStateUpdatePayload(serverPlayer.getUuid(), state.livesLeft));
+        Objects.requireNonNull(targetPlayer.getServer()).getPlayerManager().getPlayerList().forEach(statePlayer -> {
+            if (statePlayer == targetPlayer) return;
+            PlayerLivesState.PlayerData state = PlayerLivesState.getPlayerState(statePlayer);
+            SendPayload(targetPlayer, statePlayer.getGameProfile(), state);
         });
     }
 }

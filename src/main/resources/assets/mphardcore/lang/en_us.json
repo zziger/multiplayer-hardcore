@@ -8,9 +8,10 @@
   "mphardcore.player_was_rescued_already": "Player %s has reached rescue limit (%d)",
   "mphardcore.player_rescue_limit_was_reset": "Player %s rescue limit was reset",
   "mphardcore.rescued_player": "Rescued player %s",
-  "mphardcore.you_have_n_lives_left": "You have %d lives left",
   "mphardcore.has_only_one_life_left": "Player %s has only one life left!",
   "mphardcore.n_lives": "%d lives",
+  "mphardcore.install_mod": "This server uses Multiplayer Hardcore mod. Install it on client for better experience",
+  "mphardcore.mod_outdated": "Your Multiplayer Hardcore mod is outdated",
   "mphardcore.midnightconfig.title": "Multiplayer Hardcore Config",
   "mphardcore.midnightconfig.defaultLives": "Default lives amount",
   "mphardcore.midnightconfig.maxRescueTimes": "Max times player can be rescued by an admin (/hardcore rescue)"

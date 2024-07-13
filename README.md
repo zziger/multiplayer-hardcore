@@ -6,7 +6,7 @@ Best suited for Multiplayer servers.
 ## Installation and usage
 
 Mod is **required** on server, and **optional** on client.\
-Clients without the mod will not see players' lives in player list, and will not see remaining lives on death screen.
+Clients without the mod will see player's lives in player list differently (scoreboard hearts), and will not see remaining lives on death screen.
 
 This mod requires Fabric API.
 
@@ -24,9 +24,11 @@ This mod requires Fabric API.
 
 ## Features
 
-- Remaining players\' lives are displayed as hearts in player list
+- Remaining lives of players are displayed as hardcore hearts in player list (if client mod is installed)
 ![img.png](.github/player-iist.png)
-- Remaining player lives are displayed on death screen
+- Remaining lives of players are displayed as scoreboard hearts in player list (if client mod is not installed), additional scoreboard displayed in player list is not supported
+![img.png](.github/player-list-no-mod.png)
+- Remaining player lives are displayed on death screen (if client mod is installed)
 ![img.png](.github/death-screen.png)
 - Hardcore state is forced from server.properties (doesn't require to edit or recreate world anymore)
 

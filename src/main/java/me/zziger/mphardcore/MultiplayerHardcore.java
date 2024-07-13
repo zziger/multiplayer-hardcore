@@ -2,32 +2,26 @@ package me.zziger.mphardcore;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import com.mojang.brigadier.exceptions.BuiltInExceptions;
-import com.mojang.brigadier.exceptions.CommandExceptionType;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import me.zziger.mphardcore.network.C2SInitPayload;
 import me.zziger.mphardcore.network.PlayerStateUpdatePayload;
 import me.zziger.mphardcore.network.S2CInitPayload;
 import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
-import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.command.argument.EntityArgumentType;
+import net.fabricmc.fabric.api.networking.v1.*;
 import net.minecraft.command.argument.GameProfileArgumentType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.message.SentMessage;
-import net.minecraft.network.message.SignedMessage;
-import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.network.packet.s2c.play.ScoreboardDisplayS2CPacket;
+import net.minecraft.network.packet.s2c.play.ScoreboardObjectiveUpdateS2CPacket;
+import net.minecraft.network.packet.s2c.play.ScoreboardScoreUpdateS2CPacket;
+import net.minecraft.scoreboard.ScoreboardCriterion;
+import net.minecraft.scoreboard.ScoreboardDisplaySlot;
+import net.minecraft.scoreboard.ScoreboardObjective;
+import net.minecraft.scoreboard.number.BlankNumberFormat;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
 import net.minecraft.world.TeleportTarget;
@@ -36,7 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.Objects;
+import java.util.Optional;
 
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
@@ -49,14 +43,17 @@ public class MultiplayerHardcore implements ModInitializer {
     public static final String MOD_ID = "mphardcore";
     public static final Logger LOGGER = LoggerFactory.getLogger("mphardcore");
     public static MinecraftServer serverInstance = null;
+    public static ScoreboardObjective fakeScoreboard = null;
 
     @Override
     public void onInitialize() {
         MultiplayerHardcoreConfig.init();
+        PlayerCompatibilityManager.init();
 
         PayloadTypeRegistry.playS2C().register(PlayerStateUpdatePayload.ID, PlayerStateUpdatePayload.CODEC);
         PayloadTypeRegistry.playS2C().register(S2CInitPayload.ID, S2CInitPayload.CODEC);
-        PayloadTypeRegistry.playC2S().register(C2SInitPayload.ID, C2SInitPayload.CODEC);
+
+        fakeScoreboard = new ScoreboardObjective(null, "fakeLives", null, Text.literal("Lives"), ScoreboardCriterion.RenderType.HEARTS, true, BlankNumberFormat.INSTANCE);
 
         ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
             if (alive) return;
@@ -65,16 +62,34 @@ public class MultiplayerHardcore implements ModInitializer {
                 newPlayer.changeGameMode(GameMode.SPECTATOR);
                 newPlayer.sendMessage(Text.translatable("mphardcore.was_last_live"));
             } else {
-                newPlayer.sendMessage(Text.translatable("mphardcore.lives_left", state.livesLeft));
+                PlayerCompatibilityManager.PlayerData playerData = PlayerCompatibilityManager.getPlayerData(newPlayer);
+                if (!playerData.compatible) {
+                    newPlayer.sendMessage(Text.translatable("mphardcore.lives_left", state.livesLeft));
+                }
             }
         });
 
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             if (!server.isDedicated()) return;
             ServerPlayerEntity player = handler.getPlayer();
-            PlayerStateUpdatePayload.AnnounceStateOf(player, PlayerLivesState.getPlayerState(player));
+            PlayerCompatibilityManager.PlayerData playerData = PlayerCompatibilityManager.getPlayerData(player);
+
+            if (!playerData.compatible) {
+                if (playerData.hasMod) {
+                    player.sendMessage(Text.translatable("mphardcore.mod_outdated"));
+                } else {
+                    player.sendMessage(Text.translatable("mphardcore.install_mod"));
+                }
+
+                sender.sendPacket(new ScoreboardObjectiveUpdateS2CPacket(fakeScoreboard, ScoreboardObjectiveUpdateS2CPacket.ADD_MODE));
+                sender.sendPacket(new ScoreboardDisplayS2CPacket(ScoreboardDisplaySlot.LIST, fakeScoreboard));
+                sender.sendPacket(new ScoreboardScoreUpdateS2CPacket(player.getNameForScoreboard(), fakeScoreboard.getName(), 4, Optional.empty(), Optional.empty()));
+            } else {
+                ServerPlayNetworking.send(player, new S2CInitPayload(MultiplayerHardcoreConfig.defaultLives));
+            }
+
+            PlayerStateUpdatePayload.AnnounceStateOf(player.getServer(), player.getGameProfile());
             PlayerStateUpdatePayload.AnnounceAllStatesTo(player);
-            ServerPlayNetworking.send(player, new S2CInitPayload(MultiplayerHardcoreConfig.defaultLives));
         });
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {

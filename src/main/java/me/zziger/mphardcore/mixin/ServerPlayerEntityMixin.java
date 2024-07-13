@@ -24,7 +24,7 @@ public class ServerPlayerEntityMixin {
 		PlayerEntity player = (PlayerEntity) (Object) this;
 		PlayerLivesState.PlayerData state = PlayerLivesState.getPlayerState(player);
 		state.livesLeft = Math.max(state.livesLeft - 1, 0);
-		PlayerStateUpdatePayload.AnnounceStateOf(player, state);
+		PlayerStateUpdatePayload.AnnounceStateOf(player.getServer(), player.getGameProfile(), state);
 	}
 
 	@Inject(method= "onDeath(Lnet/minecraft/entity/damage/DamageSource;)V", at=@At("TAIL"))

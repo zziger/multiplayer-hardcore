@@ -54,13 +54,11 @@ public class PlayerListHudMixin {
 
     @Unique
     private void renderCustomHearts(int y, int left, int right, UUID uuid, DrawContext context, int score) {
-        Heart heart = (Heart) this.hardcoreHearts.computeIfAbsent(uuid, (uuid2) -> {
-            return new Heart(score);
-        });
-        heart.tick(score, (long) this.inGameHud.getTicks());
+        Heart heart = this.hardcoreHearts.computeIfAbsent(uuid, (uuid2) -> new Heart(score));
+        heart.tick(score, this.inGameHud.getTicks());
         int heartCount = Math.max(score, heart.getPrevScore());
         int heartBgCount = Math.max(score, Math.max(heart.getPrevScore(), MultiplayerHardcoreClient.defaultLives));
-        boolean bl = heart.useHighlighted((long) this.inGameHud.getTicks());
+        boolean bl = heart.useHighlighted(this.inGameHud.getTicks());
 
         int k = MathHelper.floor(Math.min((float) (right - left - 4) / (float) heartBgCount, 9.0F));
         int l;
@@ -68,7 +66,7 @@ public class PlayerListHudMixin {
             float f = MathHelper.clamp((float) score / 10.0f, 0.0F, 1.0F);
             MutableText text = Text.translatable("mphardcore.n_lives", new Object[]{score}).formatted(Formatting.RED);
             if (right - this.client.textRenderer.getWidth(text) < left) {
-                text = Text.literal(Integer.toString(score));
+                text = Text.literal(Integer.toString(score)).formatted(Formatting.RED);
             }
 
             context.drawTextWithShadow(this.client.textRenderer, text, (right + left - this.client.textRenderer.getWidth(text)) / 2, y, 16777215);
