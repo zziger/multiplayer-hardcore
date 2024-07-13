@@ -27,7 +27,7 @@ This mod requires Fabric API.
 - Remaining players\' lives are displayed as hearts in player list
 ![img.png](.github/player-iist.png)
 - Remaining player lives are displayed on death screen
-![img.png](.github/death-screen.pnh)
+![img.png](.github/death-screen.png)
 - Hardcore state is forced from server.properties (doesn't require to edit or recreate world anymore)
 
 ## License
