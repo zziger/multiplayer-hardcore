@@ -24,6 +24,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
+import net.minecraft.world.GameRules;
 import net.minecraft.world.TeleportTarget;
 import net.minecraft.world.World;
 import org.slf4j.Logger;
@@ -56,7 +57,8 @@ public class MultiplayerHardcore implements ModInitializer {
         fakeScoreboard = new ScoreboardObjective(null, "fakeLives", null, Text.literal("Lives"), ScoreboardCriterion.RenderType.HEARTS, true, BlankNumberFormat.INSTANCE);
 
         ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
-            if (alive) return;
+            if (alive || newPlayer.getServer() == null || !newPlayer.getServer().isHardcore()) return;
+            if (!MultiplayerHardcoreConfig.enableInSinglePlayer && !newPlayer.getServer().isDedicated()) return;
             PlayerLivesState.PlayerData state = PlayerLivesState.getPlayerState(newPlayer);
             if (state.livesLeft <= 0) {
                 newPlayer.changeGameMode(GameMode.SPECTATOR);
@@ -70,8 +72,9 @@ public class MultiplayerHardcore implements ModInitializer {
         });
 
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
-            if (!server.isDedicated()) return;
             ServerPlayerEntity player = handler.getPlayer();
+            if (player.getServer() == null || !player.getServer().isHardcore()) return;
+            if (!MultiplayerHardcoreConfig.enableInSinglePlayer && !player.getServer().isDedicated()) return;
             PlayerCompatibilityManager.PlayerData playerData = PlayerCompatibilityManager.getPlayerData(player);
 
             if (!playerData.compatible) {
@@ -95,7 +98,7 @@ public class MultiplayerHardcore implements ModInitializer {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             dispatcher.register(
                     literal("hardcore")
-                            .requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(1))
+                            .requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(1) && serverCommandSource.getServer().isHardcore())
                             .then(
                                     literal("set_lives").then(
                                             argument("player", GameProfileArgumentType.gameProfile()).then(

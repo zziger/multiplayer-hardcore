@@ -14,5 +14,6 @@
   "mphardcore.mod_outdated": "Ваш мод Multiplayer Hardcore устарел",
   "mphardcore.midnightconfig.title": "Настройки Multiplayer Hardcore",
   "mphardcore.midnightconfig.defaultLives": "Количество жизней по-умолчанию",
-  "mphardcore.midnightconfig.maxRescueTimes": "Количество раз игрок может быть перерождён администратором (/hardcore rescue)"
+  "mphardcore.midnightconfig.maxRescueTimes": "Количество раз игрок может быть перерождён администратором (/hardcore rescue)",
+  "mphardcore.midnightconfig.enableInSinglePlayer": "Включить в Одиночном режиме"
 }

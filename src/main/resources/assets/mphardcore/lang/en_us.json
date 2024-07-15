@@ -14,5 +14,6 @@
   "mphardcore.mod_outdated": "Your Multiplayer Hardcore mod is outdated",
   "mphardcore.midnightconfig.title": "Multiplayer Hardcore Config",
   "mphardcore.midnightconfig.defaultLives": "Default lives amount",
-  "mphardcore.midnightconfig.maxRescueTimes": "Max times player can be rescued by an admin (/hardcore rescue)"
+  "mphardcore.midnightconfig.maxRescueTimes": "Max times player can be rescued by an admin (/hardcore rescue)",
+  "mphardcore.midnightconfig.enableInSinglePlayer": "Enable in Single player"
 }

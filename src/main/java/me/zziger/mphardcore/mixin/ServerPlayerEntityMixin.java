@@ -1,5 +1,6 @@
 package me.zziger.mphardcore.mixin;
 
+import me.zziger.mphardcore.MultiplayerHardcoreConfig;
 import me.zziger.mphardcore.PlayerLivesState;
 import me.zziger.mphardcore.network.PlayerStateUpdatePayload;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -21,7 +22,9 @@ public class ServerPlayerEntityMixin {
 
 	@Inject(method= "onDeath(Lnet/minecraft/entity/damage/DamageSource;)V", at=@At("HEAD"))
 	private void beforeDeath(DamageSource damageSource, CallbackInfo info){
-		PlayerEntity player = (PlayerEntity) (Object) this;
+		ServerPlayerEntity player = (ServerPlayerEntity) (Object) this;
+		if (player.getServer() == null || !player.getServer().isHardcore()) return;
+		if (!MultiplayerHardcoreConfig.enableInSinglePlayer && !player.getServer().isDedicated()) return;
 		PlayerLivesState.PlayerData state = PlayerLivesState.getPlayerState(player);
 		state.livesLeft = Math.max(state.livesLeft - 1, 0);
 		PlayerStateUpdatePayload.AnnounceStateOf(player.getServer(), player.getGameProfile(), state);
@@ -29,7 +32,9 @@ public class ServerPlayerEntityMixin {
 
 	@Inject(method= "onDeath(Lnet/minecraft/entity/damage/DamageSource;)V", at=@At("TAIL"))
 	private void afterDeath(DamageSource damageSource, CallbackInfo info){
-		PlayerEntity player = (PlayerEntity) (Object) this;
+		ServerPlayerEntity player = (ServerPlayerEntity) (Object) this;
+		if (player.getServer() == null || !player.getServer().isHardcore()) return;
+		if (!MultiplayerHardcoreConfig.enableInSinglePlayer && !player.getServer().isDedicated()) return;
 		PlayerLivesState.PlayerData state = PlayerLivesState.getPlayerState(player);
 		if (state.livesLeft == 1) {
 			player.getServer().getPlayerManager().getPlayerList().forEach((innerPlayer) -> {

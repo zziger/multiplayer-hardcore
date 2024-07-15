@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class LevelInfoMixin {
 	@Inject(at = @At("HEAD"), method = "isHardcore()Z", cancellable = true)
 	private void init(CallbackInfoReturnable<Boolean> cir) {
-		if (MultiplayerHardcore.serverInstance != null)
+		if (MultiplayerHardcore.serverInstance != null && MultiplayerHardcore.serverInstance.isDedicated())
 			cir.setReturnValue(MultiplayerHardcore.serverInstance.isHardcore());
 	}
 }

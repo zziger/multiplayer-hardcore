@@ -10,6 +10,8 @@ Clients without the mod will see player's lives in player list differently (scor
 
 This mod requires Fabric API.
 
+This mod is disabled by default in singleplayer worlds. If you want to use it, you need to enable it in the MidnightLib config menu (either from ModMenu, or icon near difficulty picker in settings). Make sure to reenter your world after you change this setting.
+
 ## Config
 
 - `defaultLives` - Default amount of lives given to a new player. Also affects minimum heart count in player list.
