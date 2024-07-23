@@ -30,7 +30,9 @@ import net.minecraft.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 
 import static net.minecraft.server.command.CommandManager.argument;
@@ -95,84 +97,97 @@ public class MultiplayerHardcore implements ModInitializer {
             PlayerStateUpdatePayload.AnnounceAllStatesTo(player);
         });
 
+        int baseOpLevel = Collections.min(Arrays.asList(
+                MultiplayerHardcoreConfig.getLivesOpLevel,
+                MultiplayerHardcoreConfig.setLivesOpLevel,
+                MultiplayerHardcoreConfig.rescueOpLevel,
+                MultiplayerHardcoreConfig.resetRescueOpLevel
+        ));
+
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             dispatcher.register(
                     literal("hardcore")
-                            .requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(1) && serverCommandSource.getServer().isHardcore())
+                            .requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(baseOpLevel) && serverCommandSource.getServer().isHardcore())
                             .then(
-                                    literal("set_lives").then(
-                                            argument("player", GameProfileArgumentType.gameProfile()).then(
-                                                    argument("lives", IntegerArgumentType.integer(0))
+                                    literal("set_lives")
+                                            .requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(MultiplayerHardcoreConfig.setLivesOpLevel))
+                                            .then(
+                                                    argument("player", GameProfileArgumentType.gameProfile()).then(
+                                                            argument("lives", IntegerArgumentType.integer(0))
+                                                                    .executes(context -> {
+                                                                        int lives = IntegerArgumentType.getInteger(context, "lives");
+                                                                        Collection<GameProfile> profiles = GameProfileArgumentType.getProfileArgument(context, "player");
+                                                                        if (profiles.isEmpty()) return 0;
+
+                                                                        profiles.forEach(profile -> {
+                                                                            PlayerLivesState.PlayerData state = PlayerLivesState.getPlayerState(context.getSource().getServer(), profile);
+                                                                            state.livesLeft = lives;
+                                                                            PlayerStateUpdatePayload.AnnounceStateOf(context.getSource().getServer(), profile, state);
+                                                                            context.getSource().sendFeedback(() -> Text.translatable("mphardcore.set_player_lives_to", new Object[]{profile.getName(), lives}), true);
+                                                                        });
+
+                                                                        return 1;
+                                                                    })
+                                                    )
+                                            )
+                            ).then(
+                                    literal("get_lives")
+                                            .requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(MultiplayerHardcoreConfig.getLivesOpLevel))
+                                            .then(
+                                                    argument("player", GameProfileArgumentType.gameProfile())
                                                             .executes(context -> {
-                                                                int lives = IntegerArgumentType.getInteger(context, "lives");
                                                                 Collection<GameProfile> profiles = GameProfileArgumentType.getProfileArgument(context, "player");
                                                                 if (profiles.isEmpty()) return 0;
 
                                                                 profiles.forEach(profile -> {
                                                                     PlayerLivesState.PlayerData state = PlayerLivesState.getPlayerState(context.getSource().getServer(), profile);
-                                                                    state.livesLeft = lives;
-                                                                    PlayerStateUpdatePayload.AnnounceStateOf(context.getSource().getServer(), profile, state);
-                                                                    context.getSource().sendFeedback(() -> Text.translatable("mphardcore.set_player_lives_to", new Object[]{profile.getName(), lives}), true);
+                                                                    context.getSource().sendFeedback(() -> Text.translatable("mphardcore.player_lives_are", new Object[]{profile.getName(), state.livesLeft}), false);
                                                                 });
 
                                                                 return 1;
                                                             })
                                             )
-                                    )
                             ).then(
-                                    literal("get_lives").then(
-                                            argument("player", GameProfileArgumentType.gameProfile())
-                                                    .executes(context -> {
-                                                        Collection<GameProfile> profiles = GameProfileArgumentType.getProfileArgument(context, "player");
-                                                        if (profiles.isEmpty()) return 0;
+                                    literal("rescue")
+                                            .requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(MultiplayerHardcoreConfig.rescueOpLevel))
+                                            .then(
+                                                    argument("player", GameProfileArgumentType.gameProfile())
+                                                            .executes(context -> {
+                                                                Collection<GameProfile> profiles = GameProfileArgumentType.getProfileArgument(context, "player");
+                                                                if (profiles.size() != 1) return 0;
 
-                                                        profiles.forEach(profile -> {
-                                                            PlayerLivesState.PlayerData state = PlayerLivesState.getPlayerState(context.getSource().getServer(), profile);
-                                                            context.getSource().sendFeedback(() -> Text.translatable("mphardcore.player_lives_are", new Object[]{profile.getName(), state.livesLeft}), false);
-                                                        });
+                                                                GameProfile profile = profiles.stream().findFirst().get();
+                                                                PlayerLivesState.PlayerData state = PlayerLivesState.getPlayerState(context.getSource().getServer(), profile);
+                                                                ServerPlayerEntity player = context.getSource().getServer().getPlayerManager().getPlayer(profile.getId());
 
-                                                        return 1;
-                                                    })
-                                    )
-                            ).then(
-                                    literal("rescue").then(
-                                            argument("player", GameProfileArgumentType.gameProfile())
-                                                    .executes(context -> {
-                                                        Collection<GameProfile> profiles = GameProfileArgumentType.getProfileArgument(context, "player");
-                                                        if (profiles.size() != 1) return 0;
+                                                                if (player == null || !player.isSpectator() || state.livesLeft >= 1) {
+                                                                    context.getSource().sendFeedback(() -> Text.translatable("mphardcore.player_doesnt_need_rescue", profile.getName()), false);
+                                                                    return 0;
+                                                                }
 
-                                                        GameProfile profile = profiles.stream().findFirst().get();
-                                                        PlayerLivesState.PlayerData state = PlayerLivesState.getPlayerState(context.getSource().getServer(), profile);
-                                                        ServerPlayerEntity player = context.getSource().getServer().getPlayerManager().getPlayer(profile.getId());
+                                                                if (state.rescuedTimes >= MultiplayerHardcoreConfig.maxRescueTimes) {
+                                                                    context.getSource().sendFeedback(() -> Text.translatable("mphardcore.player_was_rescued_already", profile.getName(), MultiplayerHardcoreConfig.maxRescueTimes), false);
+                                                                    return 0;
+                                                                }
 
-                                                        if (player == null || !player.isSpectator() || state.livesLeft >= 1) {
-                                                            context.getSource().sendFeedback(() -> Text.translatable("mphardcore.player_doesnt_need_rescue", profile.getName()), false);
-                                                            return 0;
-                                                        }
+                                                                state.livesLeft = 1;
+                                                                state.rescuedTimes++;
+                                                                PlayerStateUpdatePayload.AnnounceStateOf(context.getSource().getServer(), profile, state);
+                                                                player.changeGameMode(GameMode.SURVIVAL);
 
-                                                        if (state.rescuedTimes >= MultiplayerHardcoreConfig.maxRescueTimes) {
-                                                            context.getSource().sendFeedback(() -> Text.translatable("mphardcore.player_was_rescued_already", profile.getName(), MultiplayerHardcoreConfig.maxRescueTimes), false);
-                                                            return 0;
-                                                        }
+                                                                ServerWorld world = context.getSource().getServer().getWorld(World.OVERWORLD);
+                                                                assert world != null;
+                                                                Vec3d spawnPos = new Vec3d(world.getSpawnPos().getX(), world.getSpawnPos().getY(), world.getSpawnPos().getZ());
+                                                                player.teleportTo(new TeleportTarget(world, spawnPos, Vec3d.ZERO, 0, 0, TeleportTarget.NO_OP));
+                                                                context.getSource().sendFeedback(() -> Text.translatable("mphardcore.rescued_player", profile.getName()), true);
 
-                                                        state.livesLeft = 1;
-                                                        state.rescuedTimes++;
-                                                        PlayerStateUpdatePayload.AnnounceStateOf(context.getSource().getServer(), profile, state);
-                                                        player.changeGameMode(GameMode.SURVIVAL);
+                                                                return 1;
 
-                                                        ServerWorld world = context.getSource().getServer().getWorld(World.OVERWORLD);
-                                                        assert world != null;
-                                                        Vec3d spawnPos = new Vec3d(world.getSpawnPos().getX(), world.getSpawnPos().getY(), world.getSpawnPos().getZ());
-                                                        player.teleportTo(new TeleportTarget(world, spawnPos, Vec3d.ZERO, 0, 0, TeleportTarget.NO_OP));
-                                                        context.getSource().sendFeedback(() -> Text.translatable("mphardcore.rescued_player", profile.getName()), true);
-
-                                                        return 1;
-
-                                                    })
-                                    )
+                                                            })
+                                            )
                             ).then(
                                     literal("reset_rescue")
-                                            .requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(4))
+                                            .requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(MultiplayerHardcoreConfig.resetRescueOpLevel))
                                             .then(
                                                     argument("player", GameProfileArgumentType.gameProfile())
                                                             .executes(context -> {

@@ -16,6 +16,11 @@ This mod is disabled by default in singleplayer worlds. If you want to use it, y
 
 - `defaultLives` - Default amount of lives given to a new player. Also affects minimum heart count in player list.
 - `maxRescueTimes` - Max amount of times admin (op level 1+) can execute `/hardcore rescue`
+- `enableInSinglePlayer` - Enables mod in singleplayer worlds
+- `setLivesOpLevel` - Op level required to execute `/hardcore set_lives` (default 1)
+- `getLivesOpLevel` - Op level required to execute `/hardcore get_lives` (default 1)
+- `rescueOpLevel` - Op level required to execute `/hardcore rescue` (default 1)
+- `resetRescueOpLevel` - Op level required to execute `/hardcore reset_rescue` (default 4)
 
 ## Commands
 
